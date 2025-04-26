@@ -1,10 +1,17 @@
 from pathlib import Path
+from datetime import timedelta
+import os
+from dotenv import load_dotenv
+
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+
+load_dotenv(dotenv_path)
+
+SECRET_KEY = str(os.getenv('SECRET_KEY'))
+
+DEBUG = str(os.getenv('DEBUG'))
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-SECRET_KEY = 'django-insecure-5kyzjj#%pbhz!mr5h+3!7w^(!5s1!bjp9hv2$-11=w_(mdy0r$'
-
-DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -30,9 +37,20 @@ INSTALLED_APPS = [
 ]
 
 REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    'SLIDING_TOKEN_LIFETIME': timedelta(days=30),
+    'SLIDING_TOKEN_REFRESH_LIFETIME_LATE_USER': timedelta(days=1),
+    'SLIDING_TOKEN_LIFETIME_LATE_USER': timedelta(days=30),
 }
 
 MIDDLEWARE = [
@@ -100,7 +118,10 @@ USE_I18N = True
 
 USE_TZ = True
 
+AUTH_USER_MODEL = 'accounts.User'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 STATIC_URL = 'static/'
 
