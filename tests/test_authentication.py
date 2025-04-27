@@ -12,6 +12,15 @@ from accounts.serializers import StaffProfileSerializer, AdminProfileSerializer,
 def api_client():
     return APIClient()
 
+@pytest.fixture
+def registered_user_data():
+    return {
+        'first_name': 'Abderrahmane',
+        'last_name': 'BouBou',
+        'email': 'Abderrahmane@gmail.com',
+        'password': 'Passw@#RVord',
+        'user_type': 'student',
+    }
 
 @pytest.fixture
 def create_user(db, django_user_model):
@@ -121,9 +130,48 @@ class TestUserProfileView:
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-import pytest
-from rest_framework import status
-from django.urls import reverse
+
+@pytest.mark.django_db
+class TestLogout:
+    def test_logout(self, api_client, create_user, registered_user_data):
+        logout_url = reverse('logout')
+        profile_url = reverse('profile')
+        token_verify_url = reverse('token_verify')
+        token_refresh_url = reverse('token_refresh')
+
+        user = create_user(**registered_user_data)
+
+        login_data = {
+            'email': registered_user_data['email'],
+            'password': registered_user_data['password']
+        }
+        login_response = api_client.post(reverse('token_obtain_pair'), login_data)
+        access_token = login_response.data['access']
+        refresh_token = login_response.data['refresh']
+
+        api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+        profile_response = api_client.get(profile_url)
+        assert profile_response.status_code == status.HTTP_200_OK
+
+        logout_response = api_client.post(
+            logout_url,
+            {'refresh': refresh_token},
+            HTTP_AUTHORIZATION=f'Bearer {access_token}'
+        )
+        assert logout_response.status_code == status.HTTP_205_RESET_CONTENT
+
+        verify_response = api_client.post(
+            token_verify_url,
+            {'token': refresh_token},
+        )
+        assert verify_response.status_code == status.HTTP_400_BAD_REQUEST
+        assert verify_response.data['non_field_errors'][0] == "Token is blacklisted"
+
+        refresh_response = api_client.post(
+            token_refresh_url,
+            {'refresh': refresh_token},
+        )
+        assert refresh_response.status_code == status.HTTP_401_UNAUTHORIZED
 
 @pytest.mark.django_db
 class TestUnifiedProfileView:
@@ -140,7 +188,6 @@ class TestUnifiedProfileView:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data['email'] == student.email
-        print(response.data)
         assert response.data['profile']['major'] == 'Biology'
         assert response.data['profile']['year'] == 2
 
@@ -157,6 +204,10 @@ class TestUnifiedProfileView:
         assert response.status_code == status.HTTP_200_OK
         assert response.data['email'] == 'staff@example.com'
         assert response.data['profile']['department'] == 'SA'
+
+        delete_response = api_client.delete(self.url)
+
+        assert delete_response.status_code == status.HTTP_204_NO_CONTENT
 
     def test_update_student_profile(self, api_client, create_user):
         student = create_user(
@@ -190,6 +241,10 @@ class TestUnifiedProfileView:
         assert student.studentprofile.major == 'Computer Science'
         assert student.studentprofile.year == 3
 
+        delete_response = api_client.delete(self.url)
+
+        assert delete_response.status_code == status.HTTP_204_NO_CONTENT
+
     def test_update_staff_profile(self, api_client, create_user):
         staff = create_user(
             email="staff@example.com",
@@ -220,6 +275,10 @@ class TestUnifiedProfileView:
         assert staff.last_name == 'Staff'
         assert staff.staffprofile.department == 'SA'
 
+        delete_response = api_client.delete(self.url)
+
+        assert delete_response.status_code == status.HTTP_204_NO_CONTENT
+
     def test_update_profile_unauthorized(self, api_client, create_user):
         update_data = {
             'first_name': 'wrong',
@@ -244,7 +303,10 @@ class TestUnifiedProfileView:
 
         response = api_client.patch(self.url, update_data, format='json')
 
-        print(response.data)
         assert response.status_code == status.HTTP_200_OK
         assert response.data['profile']['major'] == 'Chemistry'
         assert response.data['profile']['year'] == 2
+
+        delete_response = api_client.delete(self.url)
+
+        assert delete_response.status_code == status.HTTP_204_NO_CONTENT
