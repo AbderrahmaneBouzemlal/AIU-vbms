@@ -1,6 +1,28 @@
 from rest_framework import serializers
 from .models import User, StudentProfile, StaffProfile, AdminProfile, UserProfile
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+import os
+
+
+class UploadProfilePicture(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ('profile_picture',)
+
+    def validate_profile_picture(self, value):
+        if value:
+            valid_extensions = ['.jpg', '.jpeg', '.png']
+            ext = os.path.splitext(value.name)[1].lower()
+            if ext not in valid_extensions:
+                raise serializers.ValidationError("Unsupported file format. Please upload a JPEG or PNG image.")
+
+            max_size = 2 * 1024 * 1024
+            if value.size > max_size:
+                raise serializers.ValidationError(
+                    f"File too large. Size should not exceed {max_size // (1024 * 1024)}MB.")
+        else:
+            value = 'profile_pics/default_profilepic.jpg'
+        return value
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):

@@ -1,7 +1,14 @@
+import os
+import pytest
+import tempfile
+from PIL import Image
 from django.urls import reverse
+from django.conf import settings
 from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
-from .models import User, StudentProfile, StaffProfile, AdminProfile
+from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from accounts.models import User, StudentProfile, StaffProfile
 
 
 class AccountsTests(APITestCase):
@@ -88,3 +95,79 @@ class AccountsTests(APITestCase):
         url = reverse('student-profile')
         response = self.client.put(url, {'student_id': 'S999'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+
+@pytest.mark.django_db
+class ProfileImageUploadTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='test@example.com',
+            password='testpass123'
+        )
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse('profile-image-upload')  # Update with your actual URL name
+
+    def test_upload_profile_image(self):
+        """Test uploading an image to user profile"""
+        # Create a dummy image
+        image = Image.new('RGB', (100, 100), color='red')
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.jpg')
+        image.save(tmp_file)
+        tmp_file.seek(0)
+
+        # Upload the image
+        with open(tmp_file.name, 'rb') as file:
+            upload_data = {'profile_picture': file}
+            response = self.client.patch(self.url, upload_data, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('profile_picture', response.data)
+        self.assertTrue(response.data['profile_picture'].endswith('.jpg'))
+
+        profile = StudentProfile.objects.get(user=self.user)
+        self.assertTrue(os.path.exists(profile.profile_picture.path))
+
+    def test_upload_invalid_file(self):
+        # Create a dummy text file
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.txt')
+        tmp_file.write(b'This is not an image')
+        tmp_file.seek(0)
+
+        with open(tmp_file.name, 'rb') as file:
+            upload_data = {'profile_picture': file}
+            response = self.client.patch(self.url, upload_data, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('profile_picture', response.data)
+
+    def test_remove_profile_image(self):
+        """Test removing the profile image"""
+        # First upload an image
+        image = Image.new('RGB', (100, 100), color='blue')
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.png')
+        image.save(tmp_file)
+        tmp_file.seek(0)
+
+        with open(tmp_file.name, 'rb') as file:
+            upload_data = {'profile_picture': file}
+            self.client.patch(self.url, upload_data, format='multipart')
+
+        # Now remove the image
+        response = self.client.patch(self.url, {'profile_picture': None}, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data['profile_picture'])
+
+        # Verify the file was deleted from filesystem
+        profile = StudentProfile.objects.get(user=self.user)
+        self.assertFalse(hasattr(profile.profile_picture, 'path') or
+                         not os.path.exists(profile.profile_picture.path))
+
+    def tearDown(self):
+        # Clean up any uploaded files
+        for profile in StudentProfile.objects.all():
+            if profile.profile_picture:
+                if os.path.exists(profile.profile_picture.path):
+                    os.remove(profile.profile_picture.path)
+

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from .managers import UserManager
+from PIL import Image
 
 
 class User(AbstractUser):
@@ -40,10 +41,30 @@ class User(AbstractUser):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='profile_pics/', default="profile_pics/default_profilepic.jpg",)
+    bio = models.TextField(blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    gender = models.CharField(max_length=10, blank=True, null=True, choices=(('male', 'Male'), ('female', 'Female')))
+    location = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-        abstract = True
+        db_table = 'user_profile'
+
+
+    def save(self, *args, **kwargs):
+        super().save()
+        if self.profile_picture is None:
+            self.profile_picture = "profile_pics/default_profilepic.jpg"
+
+        # img = Image.open(self.profile_picture.path)
+        #
+        # if img.height > 100 or img.width > 100:
+        #     new_img = (100, 100)
+        #     img.thumbnail(new_img)
+        #     img.save(self.profile_picture.path)
+
+def upload_to(instance, filename):
+    return f'images/{filename}'
 
 
 class StudentProfile(UserProfile):
