@@ -6,6 +6,18 @@ class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('Email is Required')
+        user_type = extra_fields.get('user_type')
+        if not user_type:
+            raise ValueError('User Type is Required')
+        if user_type.lower() not in ['student', 'staff', 'admin']:
+            raise ValueError('Invalid user type')
+        if user_type.lower() == 'staff':
+            is_staff = extra_fields.update({'is_staff': True})
+        if user_type.lower() == 'admin':
+            is_staff = extra_fields.update({
+                'is_staff': True,
+                'is_superuser': True
+            })
         user = self.model(email=self.normalize_email(email), **extra_fields)
         user.set_password(password)
         user.save(using=self._db)

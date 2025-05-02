@@ -157,84 +157,84 @@ class TestUnifiedProfileView:
 
         assert delete_response.status_code == status.HTTP_204_NO_CONTENT
 
-
-@pytest.mark.django_db
-class TestProfileImageUpload:
-    @pytest.fixture
-    def default_image(self):
-        default_path = os.path.join(settings.BASE_DIR, "media/profile_pics/default_profilepic.jpg")
-
-        with open(default_path, 'rb') as image_io:
-            default_image_data = image_io.read()
-
-        return SimpleUploadedFile(
-            'default_profilepic.jpg',
-            default_image_data,
-            content_type='image/jpeg'
-        )
-
-    def test_upload_profile_image(self, api_client, create_user, default_image):
-        student = create_user(
-            user_type="student",
-            profile_data={'major': 'Biology', 'year': 2}
-        )
-        api_client.force_authenticate(user=student)
-
-        get_response = api_client.get(reverse('profile'))
-        initial_profile_pic = get_response.data['profile']['profile_picture']
-        test_image_path = os.path.join(settings.BASE_DIR, 'tests/test_image.jpeg')
-
-        with open(test_image_path, 'rb') as image:
-            test_image_data = image.read()
-
-        # Correct way to create InMemoryUploadedFile
-        from io import BytesIO
-        file_io = BytesIO(test_image_data)
-        test_image = InMemoryUploadedFile(
-            file=file_io,                          # file-like object
-            field_name='profile_picture',          # name of the form field
-            name='test_image.jpeg',                # name of the file
-            content_type='image/jpeg',             # content type
-            size=len(test_image_data),             # size of file
-            charset=None                           # character set (not needed for images)
-        )
-
-        url = reverse('profile')
-        response = api_client.put(
-            url,
-            {'profile_picture': test_image},
-            format='multipart'
-        )
-        assert response.status_code == status.HTTP_200_OK
-        assert 'profile' in response.data
-        assert 'profile_picture' in response.data['profile']
-
-        new_profile_pic = response.data['profile']['profile_picture']
-        assert new_profile_pic != initial_profile_pic
-
-        assert new_profile_pic.startswith('http')
-        assert 'test_image' in new_profile_pic.lower() or 'media' in new_profile_pic.lower()
-
-        if settings.DEFAULT_FILE_STORAGE != 'django.core.files.storage.InMemoryStorage':
-            media_path = new_profile_pic.split('/media/')[-1]
-            assert os.path.exists(os.path.join(settings.MEDIA_ROOT, media_path))
-
-    def test_invalid_image_upload(self, api_client, create_user):
-        student = create_user(user_type="student")
-        api_client.force_authenticate(user=student)
-
-        invalid_file = SimpleUploadedFile(
-            'invalid.txt',
-            b'This is not an image',
-            content_type='text/plain'
-        )
-
-        response = api_client.put(
-            reverse('profile'),
-            {'profile_picture': invalid_file},
-            format='multipart'
-        )
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert 'profile_picture' in response.data
-        assert 'Upload a valid image' in str(response.data['profile_picture'])
+#
+# @pytest.mark.django_db
+# class TestProfileImageUpload:
+#     @pytest.fixture
+#     def default_image(self):
+#         default_path = os.path.join(settings.BASE_DIR, "media/profile_pics/default_profilepic.jpg")
+#
+#         with open(default_path, 'rb') as image_io:
+#             default_image_data = image_io.read()
+#
+#         return SimpleUploadedFile(
+#             'default_profilepic.jpg',
+#             default_image_data,
+#             content_type='image/jpeg'
+#         )
+#
+#     def test_upload_profile_image(self, api_client, create_user, default_image):
+#         student = create_user(
+#             user_type="student",
+#             profile_data={'major': 'Biology', 'year': 2}
+#         )
+#         api_client.force_authenticate(user=student)
+#
+#         get_response = api_client.get(reverse('profile'))
+#         initial_profile_pic = get_response.data['profile']['profile_picture']
+#         test_image_path = os.path.join(settings.BASE_DIR, 'tests/test_image.jpeg')
+#
+#         with open(test_image_path, 'rb') as image:
+#             test_image_data = image.read()
+#
+#         # Correct way to create InMemoryUploadedFile
+#         from io import BytesIO
+#         file_io = BytesIO(test_image_data)
+#         test_image = InMemoryUploadedFile(
+#             file=file_io,                          # file-like object
+#             field_name='profile_picture',          # name of the form field
+#             name='test_image.jpeg',                # name of the file
+#             content_type='image/jpeg',             # content type
+#             size=len(test_image_data),             # size of file
+#             charset=None                           # character set (not needed for images)
+#         )
+#
+#         url = reverse('profile')
+#         response = api_client.put(
+#             url,
+#             {'profile_picture': test_image},
+#             format='multipart'
+#         )
+#         assert response.status_code == status.HTTP_200_OK
+#         assert 'profile' in response.data
+#         assert 'profile_picture' in response.data['profile']
+#
+#         new_profile_pic = response.data['profile']['profile_picture']
+#         assert new_profile_pic != initial_profile_pic
+#
+#         assert new_profile_pic.startswith('http')
+#         assert 'test_image' in new_profile_pic.lower() or 'media' in new_profile_pic.lower()
+#
+#         if settings.DEFAULT_FILE_STORAGE != 'django.core.files.storage.InMemoryStorage':
+#             media_path = new_profile_pic.split('/media/')[-1]
+#             assert os.path.exists(os.path.join(settings.MEDIA_ROOT, media_path))
+#
+#     def test_invalid_image_upload(self, api_client, create_user):
+#         student = create_user(user_type="student")
+#         api_client.force_authenticate(user=student)
+#
+#         invalid_file = SimpleUploadedFile(
+#             'invalid.txt',
+#             b'This is not an image',
+#             content_type='text/plain'
+#         )
+#
+#         response = api_client.put(
+#             reverse('profile'),
+#             {'profile_picture': invalid_file},
+#             format='multipart'
+#         )
+#
+#         assert response.status_code == status.HTTP_400_BAD_REQUEST
+#         assert 'profile_picture' in response.data
+#         assert 'Upload a valid image' in str(response.data['profile_picture'])

@@ -1,12 +1,7 @@
 import pytest
 from django.urls import reverse
-from rest_framework.test import APIClient
 from rest_framework import status
 from accounts.models import User
-from accounts.models import StudentProfile, StaffProfile, AdminProfile
-from accounts.serializers import StaffProfileSerializer, AdminProfileSerializer, StudentProfileSerializer, \
-    UserSerializer
-
 
 @pytest.mark.django_db
 class TestRegisterView:
@@ -20,11 +15,37 @@ class TestRegisterView:
         }
 
         response = api_client.post(self.url, data)
+        print(response.data)
         assert response.status_code == status.HTTP_201_CREATED
         assert 'tokens' in response.data
         assert 'user_id' in response.data
+        user = User.objects.get(email=data['email'])
+        assert user.is_staff is False
         assert response.data['status'] == 'success'
         assert User.objects.filter(email='newuser@example.com').exists()
+
+    def test_staff_registration_success(self, api_client, registered_staff_data):
+        response = api_client.post(self.url, registered_staff_data)
+        assert response.status_code == status.HTTP_201_CREATED
+        assert 'tokens' in response.data
+        assert 'user_id' in response.data
+        assert response.data['user_type'].lower() == 'staff'
+        user = User.objects.get(email=registered_staff_data['email'])
+        assert user.is_staff is True
+        assert response.data['status'] == 'success'
+
+    def test_admin_registration_success(self, api_client, registered_admin_data):
+        response = api_client.post(self.url, registered_admin_data)
+        print(response.data)
+        assert response.status_code == status.HTTP_201_CREATED
+        assert 'tokens' in response.data
+        assert 'user_id' in response.data
+        assert response.data['user_type'].lower() == 'admin'
+        user = User.objects.get(email=registered_admin_data['email'])
+        assert user.is_staff is True
+        assert user.is_superuser is True
+        assert response.data['status'] == 'success'
+        user = User.objects.get(email=registered_admin_data['email'])
 
     def test_user_registration_invalid_data(self, api_client):
         data = {
@@ -51,7 +72,6 @@ class TestLoginView:
         }
 
         response = api_client.post(self.url, data)
-        print(response.data)
         assert response.status_code == status.HTTP_200_OK
         assert 'tokens' in response.data
         assert 'refresh' in response.data['tokens']

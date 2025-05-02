@@ -16,7 +16,6 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=100)
     user_type = models.CharField(max_length=20, choices=USER_TYPES, default='student')
     phone_number = models.CharField(max_length=20)
-
     groups = models.ManyToManyField(
         'auth.Group',
         related_name='accounts_user',
@@ -34,6 +33,7 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = [user_type]
     objects = UserManager()
+
 
     class Meta:
         db_table = 'auth_user'
@@ -56,12 +56,6 @@ class UserProfile(models.Model):
         if self.profile_picture is None:
             self.profile_picture = "profile_pics/default_profilepic.jpg"
 
-        # img = Image.open(self.profile_picture.path)
-        #
-        # if img.height > 100 or img.width > 100:
-        #     new_img = (100, 100)
-        #     img.thumbnail(new_img)
-        #     img.save(self.profile_picture.path)
 
 def upload_to(instance, filename):
     return f'images/{filename}'

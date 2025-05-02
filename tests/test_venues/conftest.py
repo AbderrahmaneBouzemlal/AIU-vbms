@@ -1,13 +1,11 @@
 import pytest
-from rest_framework.test import APIClient
+from django.urls import reverse
 from accounts.models import User, StudentProfile, StaffProfile, AdminProfile
-from accounts.serializers import StaffProfileSerializer, AdminProfileSerializer, StudentProfileSerializer, \
-    UserSerializer
+from accounts.serializers import StaffProfileSerializer, AdminProfileSerializer, StudentProfileSerializer
 
-
-@pytest.fixture
-def api_client():
-    return APIClient()
+@pytest.fixture(scope='session')
+def django_db_setup(django_db_setup, django_db_blocker):
+    pass
 
 @pytest.fixture
 def registered_user_data():
@@ -17,26 +15,6 @@ def registered_user_data():
         'email': 'Abderrahmane@gmail.com',
         'password': 'Passw@#RVord',
         'user_type': 'student',
-    }
-
-@pytest.fixture
-def registered_admin_data():
-    return {
-        'first_name': 'Ahmed',
-        'last_name': 'green',
-        'email': 'Ahmed23@gmail.com',
-        'password': 'Passw@ord',
-        'user_type': 'admin',
-    }
-
-@pytest.fixture
-def registered_staff_data():
-    return {
-        'first_name': 'Ahmed',
-        'last_name': 'green',
-        'email': 'Ahmed23@gmail.com',
-        'password': 'Passw@ord',
-        'user_type': 'staff',
     }
 
 @pytest.fixture
@@ -65,3 +43,10 @@ def create_user(db, django_user_model):
         return user
 
     return _create_user
+
+@pytest.fixture
+def api_urls():
+    return {
+        'venue_category_list': reverse('venuecategory-list'),
+        'venue_list': reverse('venue-list'),
+    }
