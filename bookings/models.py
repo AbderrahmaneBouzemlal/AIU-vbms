@@ -86,11 +86,9 @@ class Booking(models.Model):
             self.booking_code = f"BK-{year}{month:02d}-{count:04d}"
 
         if not self.pk:
-            category = self.venue.category.name.lower()
             handled_by = self.venue.handled_by
-
-            self.payment_required = category in ['field', 'sports'] or handled_by == 'ppk'
-            self.documents_required = category in ['hall', 'auditorium', 'classroom'] and handled_by == 'sa'
+            self.payment_required = handled_by == 'ppk'
+            self.documents_required = handled_by == 'sa' or handled_by == 'ppk'
             self.requires_approval = handled_by == 'sa'
 
         super().save(*args, **kwargs)

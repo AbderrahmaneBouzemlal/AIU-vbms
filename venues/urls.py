@@ -2,10 +2,9 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from .views import VenueCategoryViewSet, VenueViewSet
+from .views import VenueViewSet
 
 router = DefaultRouter()
-router.register(r'venue-categories', VenueCategoryViewSet)
 router.register(r'venues', VenueViewSet)
 
 urlpatterns = [

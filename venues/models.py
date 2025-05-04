@@ -1,15 +1,6 @@
 from django.db import models
 
 
-class VenueCategory(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'venue_category'
-
-    def __str__(self):
-        return self.name
 
 
 class Venue(models.Model):
@@ -17,7 +8,7 @@ class Venue(models.Model):
     description = models.TextField(blank=True, null=True)
     capacity = models.IntegerField()
     location = models.CharField(max_length=200)
-    category = models.ForeignKey(VenueCategory, on_delete=models.CASCADE, related_name='venues')
+    category = models.CharField(max_length=50, blank=True, null=True)
     handled_by = models.CharField(choices=(('sa', 'SA'), ('ppk', 'PPK')), default='sa')
     is_available = models.BooleanField(default=True)
     requires_approval = models.BooleanField(default=True)

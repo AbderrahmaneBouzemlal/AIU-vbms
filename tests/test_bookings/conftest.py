@@ -1,15 +1,11 @@
-from venv import create
-
 import pytest
 import datetime
 from django.utils import timezone
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APIClient
 from accounts.models import User
-from venues.models import Venue, VenueCategory
+from venues.models import Venue
 from bookings.models import Booking, BookingStatus, EventDetail, BookingFile, DocumentType
-from accounts.serializers import StaffProfileSerializer, AdminProfileSerializer, StudentProfileSerializer
-from accounts.models import AdminProfile, StaffProfile, StudentProfile
 
 
 @pytest.fixture
@@ -46,16 +42,7 @@ def venue_category_data():
     }
 
 @pytest.fixture
-def venue_category(venue_category_data):
-    return VenueCategory.objects.create(**venue_category_data)
-
-@pytest.fixture
-def other_category(venue_category_data):
-    venue_category_data.update({'name': 'Concert Hall', 'description': 'A concert hall for concerts and events'})
-    return VenueCategory.objects.create(**venue_category_data)
-
-@pytest.fixture
-def venue_data(venue_category):
+def venue_data():
     return {
         'name': 'Test Venue',
         'location': 'Test Location',
@@ -63,7 +50,7 @@ def venue_data(venue_category):
         'description': 'A test venue for testing',
         'requires_payment': True,
         'is_available': True,
-        'category': venue_category,
+        'category': 'Sports',
     }
 
 @pytest.fixture

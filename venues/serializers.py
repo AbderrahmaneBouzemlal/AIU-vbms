@@ -1,12 +1,5 @@
 from rest_framework import serializers
-from .models import VenueCategory, Venue, VenueAvailability
-
-
-class VenueCategorySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = VenueCategory
-        fields = ['id', 'name', 'description']
+from .models import Venue, VenueAvailability
 
 
 class VenueAvailabilitySerializer(serializers.ModelSerializer):
@@ -30,8 +23,6 @@ class VenueSerializer(serializers.ModelSerializer):
 
 
 class VenueDetailSerializer(serializers.ModelSerializer):
-
-    category = VenueCategorySerializer(read_only=True)
     availability = VenueAvailabilitySerializer(many=True, read_only=True)
 
     class Meta:

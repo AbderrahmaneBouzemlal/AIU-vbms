@@ -67,11 +67,9 @@ class BookingViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def perform_destroy(self, instance):
-        # Instead of deleting, change status to cancelled
         instance.status = BookingStatus.CANCELLED
         instance.save()
 
-        # Create history record for cancellation
         BookingHistory.objects.create(
             booking=instance,
             previous_status=instance.status,
@@ -83,7 +81,6 @@ class BookingViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
 
-        # Only allow updates if booking is still pending
         if instance.status != BookingStatus.PENDING:
             return Response(
                 {"detail": "Cannot update booking that is not in pending status."},
@@ -99,14 +96,12 @@ class BookingViewSet(viewsets.ModelViewSet):
 
         if serializer.is_valid():
             serializer.save()
-            # Return the updated booking using the detail serializer
             return Response(BookingDetailSerializer(booking, context={'request': request}).data)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['get'], url_path='history')
     def history(self, request, pk=None):
-        # Only staff can view history
         if not request.user.is_staff and not request.user.is_superuser:
             raise PermissionDenied("Only staff members can view booking history.")
 
@@ -119,7 +114,6 @@ class BookingViewSet(viewsets.ModelViewSet):
     def add_feedback(self, request, pk=None):
         booking = self.get_object()
 
-        # Only staff can add feedback
         if not request.user.is_staff and not request.user.is_superuser:
             raise PermissionDenied("Only staff members can add feedback.")
 
@@ -136,9 +130,6 @@ class BookingViewSet(viewsets.ModelViewSet):
 
 
 class EventDetailViewSet(viewsets.GenericViewSet):
-    """
-    ViewSet for managing event details associated with a booking.
-    """
     permission_classes = [IsAuthenticated, CanManageBooking]
     serializer_class = EventDetailSerializer
 
@@ -148,7 +139,7 @@ class EventDetailViewSet(viewsets.GenericViewSet):
 
     def retrieve(self, request, booking_pk=None, pk=None):
         booking = self.get_booking()
-        # Check if booking has event details
+
         if not hasattr(booking, 'event_detail'):
             return Response(
                 {"detail": "No event details found for this booking."},
@@ -161,7 +152,6 @@ class EventDetailViewSet(viewsets.GenericViewSet):
     def create(self, request, booking_pk=None):
         booking = self.get_booking()
 
-        # Check if event details already exist
         if hasattr(booking, 'event_detail'):
             return Response(
                 {"detail": "Event details already exist for this booking."},
@@ -182,7 +172,6 @@ class EventDetailViewSet(viewsets.GenericViewSet):
     def update(self, request, booking_pk=None, pk=None):
         booking = self.get_booking()
 
-        # Check if event details exist
         if not hasattr(booking, 'event_detail'):
             return Response(
                 {"detail": "No event details found for this booking."},
@@ -239,16 +228,13 @@ class BookingFileViewSet(viewsets.ModelViewSet):
 
 
 class CalendarViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet for calendar views of bookings.
-    """
+
     permission_classes = [IsAuthenticated]
     serializer_class = BookingCalendarSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['status', 'venue']
 
     def get_queryset(self):
-        # Base queryset - filter by date range if provided
         start_date = self.request.query_params.get('start')
         end_date = self.request.query_params.get('end')
 
@@ -262,11 +248,9 @@ class CalendarViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
     def list(self, request):
-        # For staff, return all bookings
         if request.user.is_staff or request.user.is_superuser:
             queryset = self.filter_queryset(self.get_queryset())
         else:
-            # For regular users, show public approved bookings and their own
             queryset = self.filter_queryset(
                 self.get_queryset().filter(
                     Q(status=BookingStatus.APPROVED) | Q(user=request.user)
@@ -280,7 +264,6 @@ class CalendarViewSet(viewsets.ReadOnlyModelViewSet):
     def venue_calendar(self, request, venue_id=None):
         queryset = self.filter_queryset(self.get_queryset().filter(venue_id=venue_id))
 
-        # For non-staff, only show approved bookings and their own
         if not (request.user.is_staff or request.user.is_superuser):
             queryset = queryset.filter(
                 Q(status=BookingStatus.APPROVED) | Q(user=request.user)
@@ -291,7 +274,6 @@ class CalendarViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='user')
     def user_calendar(self, request):
-        # Only show the current user's bookings
         queryset = self.filter_queryset(self.get_queryset().filter(user=request.user))
         serializer = self.get_serializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)

@@ -8,7 +8,7 @@ import datetime
 import json
 from unittest.mock import patch
 
-from venues.models import Venue, VenueCategory
+from venues.models import Venue
 from accounts.models import User
 from bookings.models import (
     Booking,
@@ -375,11 +375,11 @@ class TestCalendarViews:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 2
 
-    def test_venue_calendar(self, authenticated_client, other_category, booking, approved_booking):
+    def test_venue_calendar(self, authenticated_client, booking, approved_booking):
         other_venue = Venue.objects.create(
             name='Other Venue',
             location='Other Location',
-            category=other_category,
+            category='category',
             capacity=200
         )
         approved_booking.venue = other_venue

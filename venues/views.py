@@ -4,20 +4,13 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from datetime import datetime
-from .models import VenueCategory, Venue, VenueAvailability
+from .models import Venue, VenueAvailability
 from .serializers import (
-    VenueCategorySerializer,
     VenueSerializer,
     VenueDetailSerializer,
     VenueAvailabilitySerializer
 )
 from accounts.permissions import IsStaffOrReadOnly
-
-
-class VenueCategoryViewSet(viewsets.ModelViewSet):
-    queryset = VenueCategory.objects.all()
-    serializer_class = VenueCategorySerializer
-    permission_classes = [IsStaffOrReadOnly]
 
 
 class VenueViewSet(viewsets.ModelViewSet):
