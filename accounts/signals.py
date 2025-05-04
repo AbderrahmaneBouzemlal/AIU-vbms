@@ -6,11 +6,11 @@ from .models import User, StudentProfile, StaffProfile, AdminProfile
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         if instance.user_type == 'staff':
-            StaffProfile.objects.create(user=instance, staff_id='STAFF' + str(instance.id))
+            StaffProfile.objects.create(user=instance, staff_id='staff' + str(instance.id))
         elif instance.user_type == 'admin':
-            AdminProfile.objects.create(user=instance, admin_id='ADMIN' + str(instance.id))
+            AdminProfile.objects.create(user=instance, admin_id='admin' + str(instance.id))
         else:
-            StudentProfile.objects.create(user=instance, student_id='AIU' + str(instance.id))
+            StudentProfile.objects.create(user=instance)
 
 
 @receiver(post_save, sender=User)
@@ -21,18 +21,18 @@ def save_user_profile(sender, instance, created, **kwargs):
                 if hasattr(instance, 'profile'):
                     instance.profile.save()
             except StudentProfile.DoesNotExist:
-                StudentProfile.objects.create(user=instance, student_id='AIU' + str(instance.id))
+                StudentProfile.objects.create(user=instance)
 
         elif instance.user_type == 'staff':
             try:
                 if hasattr(instance, 'profile'):
                     instance.profile.save()
             except StaffProfile.DoesNotExist:
-                StaffProfile.objects.create(user=instance, staff_id='STAFF' + str(instance.id))
+                StaffProfile.objects.create(user=instance, staff_id='staff' + str(instance.id))
 
         elif instance.user_type == 'admin':
             try:
                 if hasattr(instance, 'profile'):
                     instance.profile.save()
             except AdminProfile.DoesNotExist:
-                AdminProfile.objects.create(user=instance, admin_id='ADMIN' + str(instance.id))
+                AdminProfile.objects.create(user=instance, admin_id='admin' + str(instance.id))

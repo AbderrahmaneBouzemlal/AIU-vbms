@@ -6,8 +6,8 @@ from bookings.models import Booking
 class ApprovalStep(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    order = models.IntegerField()  # To define the sequence of approval steps
-    required_role = models.CharField(max_length=50)  # Role required to approve this step
+    order = models.IntegerField()
+    required_role = models.CharField(max_length=50)
 
     class Meta:
         db_table = 'approval_step'

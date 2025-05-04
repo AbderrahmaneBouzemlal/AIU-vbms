@@ -42,6 +42,10 @@ class AdminProfileSerializer(serializers.ModelSerializer):
         model = AdminProfile
         fields = '__all__'
 
+class UserMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'first_name', 'last_name')
 
 class UserSerializer(serializers.ModelSerializer):
     profile = serializers.SerializerMethodField()

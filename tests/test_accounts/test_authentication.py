@@ -11,7 +11,7 @@ class TestRegisterView:
         data = {
             'email': 'newuser@example.com',
             'password': 'StrongPass123!',
-            'user_type': 'STUDENT'
+            'user_type': 'student'
         }
 
         response = api_client.post(self.url, data)

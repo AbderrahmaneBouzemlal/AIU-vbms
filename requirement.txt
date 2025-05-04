@@ -4,6 +4,7 @@ Django==5.2
 django-filter==25.1
 djangorestframework==3.16.0
 djangorestframework_simplejwt==5.5.0
+drf-nested-routers==0.94.1
 iniconfig==2.1.0
 Markdown==3.8
 packaging==24.2

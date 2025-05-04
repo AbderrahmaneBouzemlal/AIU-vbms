@@ -8,6 +8,8 @@ from .serializers import UserSerializer, UserRegistrationSerializer, CustomToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -43,9 +45,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 'errors': {'detail': str(e)}
             }, status=status.HTTP_401_UNAUTHORIZED)
 
-
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
-from rest_framework_simplejwt.exceptions import TokenError
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
@@ -177,6 +176,3 @@ class ProfileImageUploadView(APIView):
         serializer.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-#
-
-

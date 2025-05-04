@@ -20,6 +20,9 @@ class Venue(models.Model):
     category = models.ForeignKey(VenueCategory, on_delete=models.CASCADE, related_name='venues')
     handled_by = models.CharField(choices=(('sa', 'SA'), ('ppk', 'PPK')), default='sa')
     is_available = models.BooleanField(default=True)
+    requires_approval = models.BooleanField(default=True)
+    requires_payment = models.BooleanField(default=False)
+    requires_documents = models.BooleanField(default=False)
     features = models.JSONField(default=dict)
 
     class Meta:

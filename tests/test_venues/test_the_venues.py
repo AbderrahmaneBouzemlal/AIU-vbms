@@ -20,7 +20,7 @@ def staff_user():
     user = User.objects.create_user(
         email='staff@example.com',
         password='testpass123',
-        user_type='STAFF',
+        user_type='staff',
         is_staff=True
     )
     return user
