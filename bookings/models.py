@@ -89,7 +89,6 @@ class Booking(models.Model):
             handled_by = self.venue.handled_by
             self.payment_required = handled_by == 'ppk'
             self.documents_required = handled_by == 'sa' or handled_by == 'ppk'
-            self.requires_approval = handled_by == 'sa'
 
         super().save(*args, **kwargs)
 
@@ -189,7 +188,8 @@ class BookingFeedback(models.Model):
                                      choices=[('general', 'General Feedback'),
                                               ('rejection', 'Rejection Reason'),
                                               ('approval', 'Approval Notes'),
-                                              ('requirement', 'Additional Requirements')])
+                                              ('requirement', 'Additional Requirements'),
+                                              ('note', 'Additional Notes')])
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -74,24 +74,24 @@ class TestVenueEndpoints:
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
-        assert response.data[0]['name'] == venue.name
+        assert len(response.data['results']) == 1
+        assert response.data['results'][0]['name'] == venue.name
 
     def test_filter_venues_by_category(self, api_client, venue):
         url = f"{reverse('venue-list')}?category={venue.category}"
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
-        assert response.data[0]['id'] == venue.id
+        assert len(response.data['results']) == 1
+        assert response.data['results'][0]['id'] == venue.id
 
     def test_search_venues(self, api_client, venue):
         url = f"{reverse('venue-list')}?search=Grand"
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
-        assert response.data[0]['id'] == venue.id
+        assert len(response.data['results']) == 1
+        assert response.data['results'][0]['id'] == venue.id
 
     def test_create_venue_as_staff(self, api_client, staff_user):
         api_client.force_authenticate(user=staff_user)

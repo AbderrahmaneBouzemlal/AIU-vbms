@@ -32,8 +32,8 @@ class TestBookingListCreate:
         url = reverse('booking-list')
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
-        assert response.data[0]['id'] == booking.id
+        assert len(response.data['results']) == 1
+        assert response.data['results'][0]['id'] == booking.id
 
     def test_list_bookings_admin(self, admin_client, booking):
         url = reverse('booking-list')
@@ -286,8 +286,8 @@ class TestBookingFiles:
         url = reverse('booking-file-list', kwargs={'booking_pk': booking.id})
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
-        assert response.data[0]['file_name'] == 'test_file.pdf'
+        assert len(response.data['results']) == 1
+        assert response.data['results'][0]['file_name'] == 'test_file.pdf'
 
     def test_download_file(self, authenticated_client, booking, booking_file):
         url = reverse('booking-file-download-file', kwargs={'booking_pk': booking.id, 'pk': booking_file.id})

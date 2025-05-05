@@ -77,6 +77,7 @@ class StaffProfile(UserProfile):
     staff_id = models.CharField(max_length=20, blank=True, null=True)
     department = models.CharField(max_length=100, blank=True, null=True,
                                  choices=(('PPK', 'PPK'), ('SA', 'SA')))
+    position = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
         db_table = 'staff_profile'
