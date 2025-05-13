@@ -11,14 +11,6 @@ urlpatterns = [
     path('', include(router.urls)),
 ]
 
-# Venue Categories
-"""
-GET    /api/venue-categories/               # List all venue categories
-POST   /api/venue-categories/               # Create venue category (staff)
-GET    /api/venue-categories/{id}/          # Get venue category details
-PUT    /api/venue-categories/{id}/          # Update venue category (staff)
-DELETE /api/venue-categories/{id}/          # Delete venue category (staff)
-"""
 # Venues
 """
 GET    /api/venues/                         # List all venues (with filters)

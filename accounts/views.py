@@ -100,12 +100,14 @@ class RegisterView(APIView):
                 'user_type': user.user_type
             }, status=status.HTTP_201_CREATED)
         except ValidationError as e:
+            print(e)
             return Response({
                 'status': 'error',
                 'message': 'Validation failed',
                 'errors': e.detail
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            print(e)
             return Response({
                 'status': 'error',
                 'message': 'An unexpected error occurred',
