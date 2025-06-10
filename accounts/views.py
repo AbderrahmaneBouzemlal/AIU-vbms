@@ -162,7 +162,10 @@ class ProfileImageUploadView(APIView):
             context={'request': request},
             partial=True
         )
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            print(e)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 

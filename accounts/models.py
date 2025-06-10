@@ -46,7 +46,6 @@ class UserProfile(models.Model):
     bio = models.TextField(blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     gender = models.CharField(max_length=10, blank=True, null=True, choices=(('male', 'Male'), ('female', 'Female')))
-    location = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
         db_table = 'user_profile'
@@ -66,6 +65,7 @@ class StudentProfile(UserProfile):
     student_id = models.CharField(max_length=20, blank=True, null=True)
     major = models.CharField(max_length=100, blank=True, null=True)
     organization = models.CharField(max_length=100, blank=True, null=True)
+    RoomNumber = models.CharField(max_length=100, blank=True, null=True)
     year = models.IntegerField(default=1)
 
     class Meta:

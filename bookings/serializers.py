@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from venues.models import Venue
 from venues.serializers import VenueSerializer
+from datetime import datetime
 from .models import (
     Booking,
     EventDetail,
@@ -46,11 +47,7 @@ class BookingFileSerializer(serializers.ModelSerializer):
 class EventDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventDetail
-        fields = (
-            'id', 'event_type', 'purpose', 'equipment_needed',
-            'special_requests', 'setup_time', 'teardown_time',
-            'budget', 'organizer_name', 'organizer_contact', 'event_schedule'
-        )
+        fields = '__all__'
 
     def create(self, validated_data):
         booking_id = self.context.get('booking_id')
@@ -149,9 +146,9 @@ class BookingDetailSerializer(serializers.ModelSerializer):
             'duration_hours', 'is_past'
         )
         read_only_fields = (
-            'id', 'booking_code', 'created_at', 'updated_at',
-            'payment_required', 'documents_required', 'requires_approval',
-            'approved_by', 'approval_date', 'documents_verified',
+            'booking_code', 'id', 'venue', 'venue_id',
+            'payment_required', 'documents_required',
+            'requires_approval', 'approved_by', 'approval_date', 'documents_verified',
             'is_past', 'duration_hours'
         )
 
@@ -171,6 +168,34 @@ class BookingDetailSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             validated_data['user'] = request.user
         return super().create(validated_data)
+
+    def validate(self, data):
+        if data.get('time_slot') == 'custom':
+            if not (data.get('start_time') and data.get('end_time')):
+                raise serializers.ValidationError({
+                    'start_time': 'Start time is required for custom time slot.',
+                    'end_time': 'End time is required for custom time slot.'
+                })
+            date = data.get('date')
+            start_time = data.get('start_time')
+            end_time = data.get('end_time')
+            try:
+                if isinstance(start_time, str):
+                    start_time = datetime.strptime(f"{date} {start_time}", '%Y-%m-%d %H:%M').time()
+                    data['start_time'] = start_time
+                if isinstance(end_time, str):
+                    end_time = datetime.strptime(f"{date} {end_time}", '%Y-%m-%d %H:%M').time()
+                    data['end_time'] = end_time
+            except ValueError:
+                raise serializers.ValidationError({
+                    'start_time': 'Invalid time format. Use HH:MM.',
+                    'end_time': 'Invalid time format. Use HH:MM.'
+                })
+        if data.get('attendees_count', 0) <= 0:
+            raise serializers.ValidationError({
+                'attendees_count': 'Attendees count must be greater than zero.'
+            })
+        return data
 
 
 class BookingStatusUpdateSerializer(serializers.ModelSerializer):
@@ -243,7 +268,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         model = Booking
         fields = (
             'venue_id', 'title', 'description', 'start_time',
-            'end_time', 'attendees_count', 'event_detail'
+            'end_time', 'attendees_count', 'event_detail', 'id', 'booking_code'
         )
 
     def create(self, validated_data):

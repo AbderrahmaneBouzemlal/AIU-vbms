@@ -10,6 +10,7 @@ User = get_user_model()
 
 class BookingStatus(models.TextChoices):
     PENDING = 'pending', _('Pending')
+    DRAFT = 'draft', _('Draft')
     UNDER_REVIEW = 'under_review', _('Under Review')
     APPROVED = 'approved', _('Approved')
     REJECTED = 'rejected', _('Rejected')
@@ -33,7 +34,7 @@ class Booking(models.Model):
     status = models.CharField(
         max_length=20,
         choices=BookingStatus.choices,
-        default=BookingStatus.PENDING
+        default=BookingStatus.DRAFT
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -62,7 +63,7 @@ class Booking(models.Model):
         db_table = 'booking'
 
     def __str__(self):
-        return f"{self.title} ({self.venue.name})"
+        return f"{self.title} ({self.booking_code})"
 
     @property
     def is_past(self):
@@ -99,8 +100,6 @@ class EventDetail(models.Model):
     purpose = models.TextField()
     equipment_needed = models.TextField(blank=True)
     special_requests = models.TextField(blank=True)
-    setup_time = models.DateTimeField(null=True, blank=True)
-    teardown_time = models.DateTimeField(null=True, blank=True)
     budget = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     organizer_name = models.CharField(max_length=255, blank=True)
     organizer_contact = models.CharField(max_length=100, blank=True)

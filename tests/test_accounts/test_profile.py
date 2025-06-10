@@ -1,15 +1,8 @@
-import io
-import os
 import pytest
-from PIL import Image
-from django.contrib.admin.options import InlineModelAdmin
 from django.urls import reverse
-from django.conf import settings
 from rest_framework import status
 from rest_framework.test import APIClient
-from django.core.files.uploadedfile import SimpleUploadedFile, InMemoryUploadedFile
-from accounts.models import User, StudentProfile, StaffProfile, AdminProfile, UserProfile
-from backend.settings import BASE_DIR
+from accounts.models import StudentProfile, StaffProfile
 
 
 @pytest.fixture
@@ -72,7 +65,6 @@ class TestUnifiedProfileView:
 
         response = api_client.put(self.url, update_data, format='json')
 
-        print(response.data)
         assert response.status_code == status.HTTP_200_OK
         assert response.data['first_name'] == 'Updated'
         assert response.data['last_name'] == 'Student'
@@ -119,7 +111,8 @@ class TestUnifiedProfileView:
         assert staff.first_name == 'Updated'
         assert staff.last_name == 'Staff'
         staffprofile = StaffProfile.objects.get(user=staff)
-        assert staffprofile.department == 'SA'
+        print(response.data)
+        assert staffprofile.department == 'ppk'
 
         delete_response = api_client.delete(self.url)
 

@@ -63,7 +63,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'partial_update', 'destroy']:
             self.permission_classes = [IsAuthenticated, IsOwnerOrStaff]
         elif self.action == 'update_status':
-            self.permission_classes = [IsAuthenticated, IsStaffOrReadOnly]
+            self.permission_classes = [IsAuthenticated, IsOwnerOrStaff]
         return super().get_permissions()
 
     def perform_destroy(self, instance):
@@ -92,8 +92,21 @@ class BookingViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['put'], url_path='status')
     def update_status(self, request, pk=None):
         booking = self.get_object()
-        serializer = self.get_serializer(booking, data=request.data, partial=True)
+        user = request.user
+        print(booking.status)
+        if booking.status == BookingStatus.DRAFT:
+            if not (user == booking.user or user.is_authenticated):
+                return Response(
+                    {"detail": "Only the owner or authenticated users can submit draft bookings."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        elif not user.is_staff:
+            return Response(
+                {"detail": "Only staff members can perform this status change."},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
+        serializer = self.get_serializer(booking, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(BookingDetailSerializer(booking, context={'request': request}).data)
@@ -130,7 +143,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
 
 class EventDetailViewSet(viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated, CanManageBooking]
+    permission_classes = [IsAuthenticated, IsOwnerOrStaff]
     serializer_class = EventDetailSerializer
 
     def get_booking(self):
@@ -157,7 +170,6 @@ class EventDetailViewSet(viewsets.GenericViewSet):
                 {"detail": "Event details already exist for this booking."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
         serializer = self.get_serializer(
             data=request.data,
             context={'booking_id': booking.pk}

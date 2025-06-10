@@ -1,8 +1,6 @@
 from django.db import models
 
 
-
-
 class Venue(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
@@ -14,6 +12,7 @@ class Venue(models.Model):
     requires_approval = models.BooleanField(default=True)
     requires_payment = models.BooleanField(default=False)
     requires_documents = models.BooleanField(default=False)
+    required_document_types = models.JSONField(default=list, blank=True)  # List of required DocumentType choices
     features = models.JSONField(default=dict)
 
     class Meta:

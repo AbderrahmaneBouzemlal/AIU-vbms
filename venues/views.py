@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -27,39 +28,53 @@ class VenueViewSet(viewsets.ModelViewSet):
             return VenueDetailSerializer
         return VenueSerializer
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['get', 'post'])
+    def add(self, request, *args, **kwargs):
+        if request.method == 'POST':
+            self.create(self,request, *args, **kwargs)
+        elif request.method == 'GET':
+            self.retrieve(self,request, *args, **kwargs)
+
+    @action(detail=True, methods=['get', 'post'])
     def availability(self, request, pk=None):
         venue = self.get_object()
-        availability = VenueAvailability.objects.filter(venue=venue)
 
-        date_param = request.query_params.get('date', None)
-        if date_param:
-            try:
-                filter_date = datetime.strptime(date_param, '%Y-%m-%d').date()
-                availability = availability.filter(date=filter_date)
-            except ValueError:
+        if request.method == 'GET':
+            availability = VenueAvailability.objects.filter(venue=venue)
+
+            date_param = request.query_params.get('date', None)
+            if date_param:
+                try:
+                    filter_date = datetime.strptime(date_param, '%Y-%m-%d').date()
+                    availability = availability.filter(date=filter_date)
+                except ValueError:
+                    return Response(
+                        {'error': 'Invalid date format. Use YYYY-MM-DD'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            serializer = VenueAvailabilitySerializer(availability, many=True)
+            return Response(serializer.data)
+
+        elif request.method == 'POST':
+            # Check permissions for POST
+            if not (request.user.is_authenticated and
+                    (request.user.is_staff or request.user.is_superuser)):
                 return Response(
-                    {'error': 'Invalid date format. Use YYYY-MM-DD'},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {'error': 'Permission denied'},
+                    status=status.HTTP_403_FORBIDDEN
                 )
 
-        serializer = VenueAvailabilitySerializer(availability, many=True)
-        return Response(serializer.data)
+            if isinstance(request.data, list):
+                serializer = VenueAvailabilitySerializer(data=request.data, many=True)
 
-    @action(detail=True, methods=['post'], permission_classes=[IsStaffOrReadOnly, IsAuthenticated],)
-    def availability(self, request, pk=None):
-        venue = self.get_object()
+                if serializer.is_valid():
+                    for item in serializer.validated_data:
+                        item['venue'] = venue
 
-        if isinstance(request.data, list):
-            serializer = VenueAvailabilitySerializer(data=request.data, many=True)
-
-            if serializer.is_valid():
-                for item in serializer.validated_data:
-                    item['venue'] = venue
-
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data
         copy = data.copy()
@@ -99,9 +114,14 @@ class VenueViewSet(viewsets.ModelViewSet):
     def search(self, request):
         queryset = self.get_queryset()
 
-        category_id = request.query_params.get('category', None)
-        if category_id:
-            queryset = queryset.filter(category__id=category_id)
+        # Fixed: Handle category by name/slug instead of ID
+        category = request.query_params.get('category', None)
+        if category:
+            # Assuming your category field is a CharField with choices or a slug field
+            # If it's a ForeignKey, you might need to filter by category__name or category__slug
+            queryset = queryset.filter(category=category)
+            # Or if category is a ForeignKey to a Category model:
+            # queryset = queryset.filter(category__name__iexact=category)
 
         min_capacity = request.query_params.get('min_capacity', None)
         if min_capacity and min_capacity.isdigit():
@@ -119,11 +139,17 @@ class VenueViewSet(viewsets.ModelViewSet):
         if handled_by:
             queryset = queryset.filter(handled_by=handled_by)
 
+        # Added search parameter support
+        search = request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search) |
+                Q(location__icontains=search)
+            )
+
         feature = request.query_params.get('feature', None)
         if feature:
-            # try:
-            #     queryset = queryset.filter(features__contains={feature: True})
-            # except Exception:
             venues_with_feature = []
             for venue in queryset:
                 if feature in venue.features and venue.features.get(feature) is True:
