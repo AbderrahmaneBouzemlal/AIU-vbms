@@ -15,7 +15,6 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     user_type = models.CharField(max_length=20, choices=USER_TYPES, default='student')
-    student_id = models.CharField(max_length=20, blank=True, null=True)
     phone_number = models.CharField(max_length=20)
     groups = models.ManyToManyField(
         'auth.Group',
